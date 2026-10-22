@@ -40,7 +40,7 @@ const bellGarden=document('Bell Garden',[
   bar(340,300,240,17,72,'#bbaed2','bell'),
   bar(785,355,260,-17,79,'#a6bac8','bell'),
   object('bumper',475,490,{radius:38,bounce:.45,musical:true,note:76,voice:'bell',volume:.38,color:'#d7b36f'}),
-  object('bumper',650,550,{radius:34,bounce:.5,musical:true,note:74,voice:'bell',volume:.32,color:'#a0b49d'}),
+  object('bumper',560,455,{radius:34,bounce:.5,musical:true,note:74,voice:'bell',volume:.32,color:'#a0b49d'}),
   ramp(330,605,230,19),ramp(800,650,230,-19),
   object('funnel',500,735,{width:260,color:'#c8ad85'}),
   object('catcher',500,825,{width:280,color:'#9daf9d'}),

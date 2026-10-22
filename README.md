@@ -74,6 +74,8 @@ The serializable document is the source of truth; runtime structures are separat
 
 Physics runs outside React using a fixed step and bounded catch-up accumulator. World coordinates do not change on resize or device-pixel-ratio changes. Emissions are scheduled against the audio clock with a short look-ahead, then released at the matching physics step. Per-marble/per-instrument cooldown and impact thresholds prevent resting contacts from retriggering. Reset clears runtime state without changing the document.
 
+Small marbles use smooth collision geometry so they roll reliably on gentle ramps. Ramp and instrument friction and bounce values apply directly to their collision bodies. The loop uses 120 Hz steps and catches up for at most 100 ms after a delayed frame. Marbles on near-horizontal or physically blocked paths can still settle naturally.
+
 ## Limits and verification
 
 The simulation caps active marbles at 120 and removes escaped marbles or marbles older than 45 seconds. The editor permits 100 placed objects; validated imports permit up to 200. Synthesis caps polyphony at 32 voices. This is discrete 2D rigid-body physics: very fast, tiny marbles or densely intersecting shapes can produce imperfect contacts. Editor/import limits keep geometry and launch speeds within useful ranges. The canvas is visual; accessible object selection and numeric editing are available through the surrounding controls.

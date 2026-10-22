@@ -8,6 +8,14 @@ import type { EmissionEvent } from '../audio/Transport';
 import { hitTest, objectSize, render, rotationHandle } from '../canvas/renderer';
 import type { Camera, Pulse } from '../canvas/renderer';
 
+// Keep ordinary low-refresh frames in real time while putting a firm upper bound
+// on work after a suspended tab or debugger pause.  This is deliberately shared
+// by the accumulator cap and loop limit: a 100 ms frame gets its full 12 fixed
+// steps, while a longer stall is discarded instead of becoming an emission burst.
+export const MAX_FRAME_DELTA_SECONDS = 0.1;
+export const MAX_CATCH_UP_STEPS = 12;
+export const MAX_ACCUMULATED_SECONDS = STEP_SECONDS * MAX_CATCH_UP_STEPS;
+
 export interface RuntimeStatus { playing:boolean; marbles:number; notes:number; beat:number; audioReady:boolean; zoom:number }
 export interface NoteActivity { note:number; voice:Voice; color:string; id:string }
 export interface RuntimeCallbacks {
@@ -141,14 +149,14 @@ export class MarbleRuntime {
   }
   private tick=(timestamp:number)=>{
     if(this.destroyed)return;
-    const delta=this.previous?Math.min(.1,Math.max(0,(timestamp-this.previous)/1000)):0;this.previous=timestamp;
+    const delta=this.previous?Math.min(MAX_FRAME_DELTA_SECONDS,Math.max(0,(timestamp-this.previous)/1000)):0;this.previous=timestamp;
     const now=this.synth.currentTime;
     if(this.playing){
       this.releases.push(...this.transport.poll(now,this.emitters()));
       this.releases=this.releases.filter(event=>event.time>=now-.12);
-      this.accumulator=Math.min(this.accumulator+delta,STEP_SECONDS*6);
+      this.accumulator=Math.min(this.accumulator+delta,MAX_ACCUMULATED_SECONDS);
       let steps=0;
-      while(this.accumulator>=STEP_SECONDS&&steps<6){
+      while(this.accumulator>=STEP_SECONDS&&steps<MAX_CATCH_UP_STEPS){
         const stepTime=now-this.accumulator+STEP_SECONDS;
         const pending:EmissionEvent[]=[];
         for(const event of this.releases){if(event.time<=stepTime){const emitter=this.objects.find(o=>o.id===event.emitterId&&o.type==='emitter') as EmitterObject|undefined;if(emitter)this.physics.emit(emitter);}else pending.push(event);}

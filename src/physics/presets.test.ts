@@ -24,4 +24,28 @@ describe('authored machines',()=>{
     if(preset.id==='first-melody')expect([...pitches].filter(note=>[60,64,67,72,48].includes(note))).toEqual([60,64,67,72,48]);
     transport.pause();for(let frame=0;frame<6000;frame++)world.step();expect(world.marbles.size).toBe(0);world.destroy();
   });
+
+  for (const preset of presets) it(`${preset.name} advances each emitter without help from later marbles`,()=>{
+    const doc=validateDocument(preset.document);
+    const emitters=doc.objects.filter((o):o is EmitterObject=>o.type==='emitter');
+    let played=false;
+    const world=new PhysicsWorld(({object})=>{
+      if (object.type==='bar'||(object.type==='bumper'&&object.musical)) played=true;
+    });
+    world.setObjects(doc.objects);
+    for (const source of emitters) {
+      world.reset(); played=false;
+      expect(world.emit(source)).toBe(true);
+      const marble=[...world.marbles.values()][0]!;
+      const startY=marble.body.position.y;
+      let furthestY=startY;
+      for(let frame=0;frame<960;frame++){
+        world.step();
+        furthestY=Math.max(furthestY,marble.body.position.y);
+      }
+      expect(furthestY-startY,`${source.id} should make visible downhill progress`).toBeGreaterThan(100);
+      expect(played,`${source.id} should reach an instrument without another marble knocking it loose`).toBe(true);
+    }
+    world.destroy();
+  });
 });
